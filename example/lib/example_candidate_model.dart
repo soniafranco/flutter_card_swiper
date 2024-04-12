@@ -1,42 +1,64 @@
-import 'package:flutter/cupertino.dart';
-
 class ExampleCandidateModel {
   final String name;
-  final String job;
+  final String age;
   final String city;
-  final List<Color> color;
+  final String distance;
 
   ExampleCandidateModel({
     required this.name,
-    required this.job,
+    required this.age,
     required this.city,
-    required this.color,
+    required this.distance,
   });
 }
 
 final List<ExampleCandidateModel> candidates = [
   ExampleCandidateModel(
-    name: 'One, 1',
-    job: 'Developer',
+    name: 'Carlotta',
+    age: '31',
     city: 'Areado',
-    color: const [Color(0xFFFF3868), Color(0xFFFFB49A)],
+    distance: '25,5',
   ),
   ExampleCandidateModel(
-    name: 'Two, 2',
-    job: 'Manager',
+    name: 'Francesca',
+    age: '31',
     city: 'New York',
-    color: const [Color(0xFF736EFE), Color(0xFF62E4EC)],
+    distance: '24,5',
   ),
   ExampleCandidateModel(
-    name: 'Three, 3',
-    job: 'Engineer',
+    name: 'Paola',
+    age: '24',
     city: 'London',
-    color: const [Color(0xFF2F80ED), Color(0xFF56CCF2)],
+    distance: '20,8',
   ),
   ExampleCandidateModel(
-    name: 'Four, 4',
-    job: 'Designer',
+    name: 'Giulia',
+    age: '28',
     city: 'Tokyo',
-    color: const [Color(0xFF0BA4E0), Color(0xFFA9E4BD)],
+    distance: '38,6',
+  ),
+  ExampleCandidateModel(
+    name: 'Laura',
+    age: '25',
+    city: 'Areado',
+    distance: '35,8',
+  ),
+  ExampleCandidateModel(
+    name: 'Ilaria',
+    age: '30',
+    city: 'New York',
+    distance: '20,8',
+  ),
+  ExampleCandidateModel(
+    name: 'Alessia',
+    age: '29',
+    city: 'London',
+    distance: '24,5',
+  ),
+  ExampleCandidateModel(
+    name: 'Federica',
+    age: '27',
+    city: 'Tokyo',
+    distance: '24,5',
   ),
 ];

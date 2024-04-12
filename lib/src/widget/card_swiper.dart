@@ -44,11 +44,6 @@ class CardSwiper extends StatefulWidget {
   /// Defaults to 200 milliseconds.
   final Duration duration;
 
-  /// The padding around the swiper.
-  ///
-  /// Defaults to `EdgeInsets.symmetric(horizontal: 20, vertical: 25)`.
-  final EdgeInsetsGeometry padding;
-
   /// The maximum angle the card reaches while swiping.
   ///
   /// Must be between 0 and 360 degrees. Defaults to 30 degrees.
@@ -123,13 +118,15 @@ class CardSwiper extends StatefulWidget {
   ///
   /// Must be a positive value. Defaults to Offset(0, 40).
   final Offset backCardOffset;
+  final Offset cardOffset;
+
+  final void Function(SlideRegion? slideRegion)? onSlideRegionDetected;
 
   const CardSwiper({
     required this.cardBuilder,
     required this.cardsCount,
     this.controller,
     this.initialIndex = 0,
-    this.padding = const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
     this.duration = const Duration(milliseconds: 200),
     this.maxAngle = 30,
     this.threshold = 50,
@@ -144,6 +141,8 @@ class CardSwiper extends StatefulWidget {
     this.numberOfCardsDisplayed = 2,
     this.onUndo,
     this.backCardOffset = const Offset(0, 40),
+    this.cardOffset = Offset.zero,
+    this.onSlideRegionDetected,
     super.key,
   })  : assert(
           maxAngle >= 0 && maxAngle <= 360,

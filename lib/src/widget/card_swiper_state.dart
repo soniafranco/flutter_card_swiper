@@ -1,10 +1,14 @@
 part of 'card_swiper.dart';
 
-class _CardSwiperState<T extends Widget> extends State<CardSwiper>
-    with SingleTickerProviderStateMixin {
+enum SlideRegion { inNopeRegion, inLikeRegion, inSuperLikeRegion }
+
+class _CardSwiperState<T extends Widget> extends State<CardSwiper> with SingleTickerProviderStateMixin {
   late CardAnimation _cardAnimation;
   late AnimationController _animationController;
-
+  Offset? cardOffset = Offset.zero;
+  Offset? dragStart;
+  Offset? dragPosition;
+  SlideRegion? slideRegion;
   SwipeType _swipeType = SwipeType.none;
   CardSwiperDirection _detectedDirection = CardSwiperDirection.none;
   CardSwiperDirection _detectedHorizontalDirection = CardSwiperDirection.none;
@@ -58,8 +62,7 @@ class _CardSwiperState<T extends Widget> extends State<CardSwiper>
         _detectedVerticalDirection = direction;
     }
 
-    widget.onSwipeDirectionChange
-        ?.call(_detectedHorizontalDirection, _detectedVerticalDirection);
+    widget.onSwipeDirectionChange?.call(_detectedHorizontalDirection, _detectedVerticalDirection);
   }
 
   @override
@@ -73,20 +76,14 @@ class _CardSwiperState<T extends Widget> extends State<CardSwiper>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        return Padding(
-          padding: widget.padding,
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              return Stack(
-                clipBehavior: Clip.none,
-                fit: StackFit.expand,
-                children: List.generate(numberOfCardsOnScreen(), (index) {
-                  if (index == 0) return _frontItem(constraints);
-                  return _backItem(constraints, index);
-                }).reversed.toList(),
-              );
-            },
-          ),
+        return Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          fit: StackFit.expand,
+          children: List.generate(numberOfCardsOnScreen(), (index) {
+            if (index == 0) return _frontItem(constraints);
+            return _backItem(constraints, index);
+          }).reversed.toList(),
         );
       },
     );
@@ -96,49 +93,72 @@ class _CardSwiperState<T extends Widget> extends State<CardSwiper>
     return Positioned(
       left: _cardAnimation.left,
       top: _cardAnimation.top,
-      child: GestureDetector(
-        child: Transform.rotate(
-          angle: _cardAnimation.angle,
-          child: ConstrainedBox(
-            constraints: constraints,
-            child: widget.cardBuilder(
-              context,
-              _currentIndex!,
-              (100 * _cardAnimation.left / widget.threshold).ceil(),
-              (100 * _cardAnimation.top / widget.threshold).ceil(),
-            ),
-          ),
-        ),
-        onTap: () async {
-          if (widget.isDisabled) {
-            await widget.onTapDisabled?.call();
-          }
-        },
-        onPanStart: (tapInfo) {
-          if (!widget.isDisabled) {
-            final renderBox = context.findRenderObject()! as RenderBox;
-            final position = renderBox.globalToLocal(tapInfo.globalPosition);
-
-            if (position.dy < renderBox.size.height / 2) _tappedOnTop = true;
-          }
-        },
-        onPanUpdate: (tapInfo) {
-          if (!widget.isDisabled) {
-            setState(
-              () => _cardAnimation.update(
-                tapInfo.delta.dx,
-                tapInfo.delta.dy,
-                _tappedOnTop,
+      child: Stack(
+        children: [
+          GestureDetector(
+            child: Transform.rotate(
+              angle: _cardAnimation.angle,
+              child: ConstrainedBox(
+                constraints: constraints,
+                child: widget.cardBuilder(
+                  context,
+                  _currentIndex!,
+                  (100 * _cardAnimation.left / widget.threshold).ceil(),
+                  (100 * _cardAnimation.top / widget.threshold).ceil(),
+                ),
               ),
-            );
-          }
-        },
-        onPanEnd: (tapInfo) {
-          if (_canSwipe) {
-            _tappedOnTop = false;
-            _onEndAnimation();
-          }
-        },
+            ),
+            onTap: () async {
+              if (widget.isDisabled) {
+                await widget.onTapDisabled?.call();
+              }
+            },
+            onPanStart: (tapInfo) {
+              if (!widget.isDisabled) {
+                dragStart = tapInfo.globalPosition;
+              }
+            },
+            onPanUpdate: (tapInfo) {
+              final isInLeftRegion = cardOffset!.dx / 100 < -0.45;
+              final isInRightRegion = (cardOffset!.dx - widget.backCardOffset.dx) / 100 > 0.45;
+              final isInTopRegion = (cardOffset!.dy / 100) < -0.40;
+
+              if (!widget.isDisabled) {
+                setState(() {
+                  if (isInLeftRegion || isInRightRegion) {
+                    slideRegion = isInLeftRegion ? SlideRegion.inNopeRegion : SlideRegion.inLikeRegion;
+                  } else if (isInTopRegion) {
+                    slideRegion = SlideRegion.inSuperLikeRegion;
+                  } else {
+                    slideRegion = null;
+                  }
+
+                  _cardAnimation.update(
+                    tapInfo.delta.dx,
+                    tapInfo.delta.dy,
+                    _tappedOnTop,
+                  );
+
+                  dragPosition = tapInfo.globalPosition;
+                  cardOffset = dragPosition! - dragStart!;
+                });
+
+                if (widget.onSlideRegionDetected != null) {
+                  widget.onSlideRegionDetected?.call(slideRegion);
+                }
+              }
+            },
+            onPanEnd: (tapInfo) {
+              if (_canSwipe) {
+                _tappedOnTop = false;
+                _onEndAnimation();
+              }
+              setState(() {
+                slideRegion = null;
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -186,9 +206,7 @@ class _CardSwiperState<T extends Widget> extends State<CardSwiper>
 
   Future<void> _handleCompleteSwipe() async {
     final isLastCard = _currentIndex! == widget.cardsCount - 1;
-    final shouldCancelSwipe = await widget.onSwipe
-            ?.call(_currentIndex!, _nextIndex, _detectedDirection) ==
-        false;
+    final shouldCancelSwipe = await widget.onSwipe?.call(_currentIndex!, _nextIndex, _detectedDirection) == false;
 
     if (shouldCancelSwipe) {
       return;
@@ -225,14 +243,10 @@ class _CardSwiperState<T extends Widget> extends State<CardSwiper>
 
   CardSwiperDirection _getEndAnimationDirection() {
     if (_cardAnimation.left.abs() > widget.threshold) {
-      return _cardAnimation.left.isNegative
-          ? CardSwiperDirection.left
-          : CardSwiperDirection.right;
+      return _cardAnimation.left.isNegative ? CardSwiperDirection.left : CardSwiperDirection.right;
     }
     if (_cardAnimation.top.abs() > widget.threshold) {
-      return _cardAnimation.top.isNegative
-          ? CardSwiperDirection.top
-          : CardSwiperDirection.bottom;
+      return _cardAnimation.top.isNegative ? CardSwiperDirection.top : CardSwiperDirection.bottom;
     }
     return CardSwiperDirection.none;
   }

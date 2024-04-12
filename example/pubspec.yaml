@@ -12,6 +12,15 @@ dependencies:
     sdk: flutter
   flutter_card_swiper:
     path: ../
+  flutter_rating_bar: ^4.0.1
 
 flutter:
+
+  assets:
+    - "assets/images/profile.png"
+    - "assets/images/zodiac.png"
+    - "assets/images/star_full.png"
+    - "assets/images/star_outlined.png"
+    - "assets/images/close.png"
+    - "assets/images/message.png"
   uses-material-design: true
