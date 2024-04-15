@@ -4,27 +4,14 @@ import 'package:flutter/material.dart';
 class DeckCard extends StatelessWidget {
   final ExampleCandidateModel candidate;
   final int index;
+  final double angle;
+
   const DeckCard({
     required this.candidate,
     required this.index,
+    required this.angle,
     super.key,
   });
-
-  double getAngle(int index) {
-    if (index == 0) {
-      return -10.5 / 360;
-    }
-    if (index.isOdd) {
-      return 18.5 / 360;
-    }
-    if (index.isEven) {
-      return -11.5 / 360;
-    }
-    if (index % 5 == 0) {
-      return 15.5 / 360;
-    }
-    return 0;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +19,7 @@ class DeckCard extends StatelessWidget {
     final widthPolaroid = MediaQuery.of(context).size.width - 96;
 
     return Transform.rotate(
-      angle: getAngle(index),
+      angle: angle,
       child: Center(
         child: SizedBox(
           height: heightPolaroid,

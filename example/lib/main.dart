@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:example/example_candidate_model.dart';
 import 'package:example/widget/deck_card.dart';
 import 'package:example/widget/tinder_buttons.dart';
@@ -25,11 +27,13 @@ class Example extends StatefulWidget {
 
 class _ExamplePageState extends State<Example> {
   final CardSwiperController controller = CardSwiperController();
+  late List<double> angles;
 
   final cardsList = candidates;
 
   @override
   void initState() {
+    getAngles(candidates.length);
     super.initState();
   }
 
@@ -37,6 +41,20 @@ class _ExamplePageState extends State<Example> {
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+
+  void getAngles(int cardsNuumber) {
+    final anglesList = <double>[];
+    for (var i = 0; i < cardsNuumber; i++) {
+      if (i.isOdd) {
+        anglesList.add((15 + Random().nextInt(40)) / 360);
+      } else if (i.isEven) {
+        anglesList.add((-15 - Random().nextInt(40)) / 360);
+      }
+      setState(() {
+        angles = anglesList;
+      });
+    }
   }
 
   @override
@@ -62,6 +80,7 @@ class _ExamplePageState extends State<Example> {
               cardBuilder: (context, index, horizontalThresholdPercentage, verticalThresholdPercentage) {
                 return DeckCard(
                   index: index,
+                  angle: angles.elementAt(index),
                   candidate: candidates.elementAt(index),
                 );
                 // return TinderCard(index: index, candidate: candidates.elementAt(index));
@@ -72,34 +91,6 @@ class _ExamplePageState extends State<Example> {
             padding: EdgeInsets.only(bottom: kBottomNavigationBarHeight),
             child: TinderRowButtons(),
           ),
-          // Padding(
-          //   padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          //     children: [
-          //       FloatingActionButton(
-          //         onPressed: controller.undo,
-          //         child: const Icon(Icons.rotate_left),
-          //       ),
-          //       FloatingActionButton(
-          //         onPressed: () => controller.swipe(CardSwiperDirection.left),
-          //         child: const Icon(Icons.keyboard_arrow_left),
-          //       ),
-          //       FloatingActionButton(
-          //         onPressed: () => controller.swipe(CardSwiperDirection.right),
-          //         child: const Icon(Icons.keyboard_arrow_right),
-          //       ),
-          //       FloatingActionButton(
-          //         onPressed: () => controller.swipe(CardSwiperDirection.top),
-          //         child: const Icon(Icons.keyboard_arrow_up),
-          //       ),
-          //       FloatingActionButton(
-          //         onPressed: () => controller.swipe(CardSwiperDirection.bottom),
-          //         child: const Icon(Icons.keyboard_arrow_down),
-          //       ),
-          //     ],
-          //   ),
-          // ),
         ],
       ),
     );
@@ -127,5 +118,3 @@ class _ExamplePageState extends State<Example> {
     return true;
   }
 }
-
-class TabloDeckCard {}
